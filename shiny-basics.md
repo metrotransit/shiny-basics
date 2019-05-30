@@ -25,7 +25,7 @@ An example:
 
 A shiny app has two fundamental components:
 
-##### **ui**
+#### **ui**
 The *U*ser *I*nterface component, describing the layout of the html
 page the app will display, including:
 
@@ -33,7 +33,7 @@ page the app will display, including:
 * places where user will interact (select, checkbox, range)
 * how the data, plots, or text should be *rendered*
 	
-##### **server**
+#### **server**
 The "back-end" component, encoding how the data will be handled, 
 and how plots or data tables are built. 
 
@@ -117,7 +117,7 @@ xvars <- names(survey_sim)[sapply(survey_sim, is.factor)]
 
 This is an example of something that might go into a `global.R` or helper script.  
 
-##### server
+#### server
 We know that the server will have to construct the plot. It
 is a function, which takes in `input` values and returns `output`. 
 
@@ -148,7 +148,7 @@ than subsetting data and passing that back and forth.
 adjust and re-create itself based on the value of the input.
 
 
-##### ui
+#### ui
 The user interface is where the selection of the inputs is 
 made, and where the output is displayed. Things are passed
 back and forth from the ui to the server and vice-versa
@@ -229,7 +229,7 @@ ui = shinyUI(
     
   ) # end UI
 ```
-
+#### Shiny App function
 To put it all together, we wrap both the server and ui definitions
 into a `shinyApp()` function:
 
@@ -259,7 +259,7 @@ shinyApp(
   ) # end UI
 ) # end App
 ```
-
+### Modify app to optionally plot by time of day
 To add a checkbox for plotting by time of day, we can start
 by adding another input section, this time beginning with the 
 ui side (so we know where it will be shown on the page):
