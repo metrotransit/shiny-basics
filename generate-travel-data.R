@@ -15,6 +15,9 @@ mode_grid <- data.table(transit_mode = c('local bus', 'express bus', 'light rail
                         weights = c(0.67, 0.1, 0.23))
 
 ## random draws are taken of each variable independently, and comined into one dataset ####
+# example 
+sample(purpose_grid$purpose, 10, replace = T, prob = purpose_grid$weights)
+
 # use set.seed function if you wish to have the same results as example dataset
 set.seed(22)
 survey_sim <- data.table(trip_purpose = factor(sample(purpose_grid$purpose, 1000, replace = T, prob = purpose_grid$weights),
