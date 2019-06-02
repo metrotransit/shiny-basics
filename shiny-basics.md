@@ -1,11 +1,10 @@
-### [Shiny](https://shiny.rstudio.com/tutorial/)
+## [Shiny](https://shiny.rstudio.com/tutorial/)
 
-Shiny is a way to build websites with interactive data visualization.
+Shiny is a way to to build interactive web applications for data visualization.
 It is a package implemented in `R`, but connected to many html
 "widgets" and JavaScript libraries to produce web content.
 
-Shiny produces html code that can be stand-alone (in a browser) or made into a hosted
-page on the web (for instance, through [shinyapps.io](http://www.shinyapps.io/)).
+Shiny is both a tool for writing web applications, and a server for running them. Apps can be run directly from R, or hosted on a shiny server (for instance, [shinyapps.io](http://www.shinyapps.io/)).
 
 Shiny websites can be:  
 
@@ -21,41 +20,40 @@ necessary to render the website.
 An example:
 [Route trends](https://metrotransitmn.shinyapps.io/route-trends/)
 
-### Coding a shiny app
+## Coding a shiny app
 
 A shiny app has two fundamental components:
 
-#### **ui**
-The *U*ser *I*nterface component, describing the layout of the html
+### **ui**
+The *U*ser *I*nterface component, describing the layout of the web
 page the app will display, including:
 
-* panels, columns, and rows
-* places where user will interact (select, checkbox, range)
-* how the data, plots, or text should be *rendered*
-	
-#### **server**
-The "back-end" component, encoding how the data will be handled, 
-and how plots or data tables are built. 
+* the layout, including panels, columns, and rows
+* the interactive elements, including text, select, checkbox, and range inputs
+* how outputs from R--data, text and plots--should be rendered
 
-The server component is made up of functions. The general form of these functions is
-```
-function(input, output)
-```
-, which take `input` values from the interactive part, and return some `output`
-values to be displayed in the UI.
+### **server**
+The "back-end" component, the server implements the functionality of the app, handling inputs from the UI, and creating outputs for the UI.
 
-### A shiny example walk-through
-Let's say we want to be able to visualize the count data for a 
-survey dataset with multiple response columns. Further, let's say we 
-wanted to be able to visualize the responses either by looking at the totals, 
+The general form of server activity is to take `input` values from choices made in
+the UI, perform specified functions in R, and return the desired `output` to the UI
+for rednering. 
+
+## A shiny example walk-through
+
+### Objective: visualize transit on-board survey
+Imagine you just received the cleaned responses from 1000 riders on board the transit
+system of Busytown. Riders were intercepted randomly, and asked a battery of 
+questions about their trip purpose, origin, destination, etc. We want to be able to 
+visualize the responses interactively, to facilitate initial data exploration. Further, we want to be able to visualize the responses either by looking at the totals, 
 or by looking at how the responses change with time of day. 
 
-We could simply create a bunch of static plots to export as pdfs, or a single markdown
- document. But better would be, an _interactive_ plot which let the investigator choose 
- which variable to look at in a given moment. 
+We could simply create a bunch of static plots to export as pdfs, or a single Rmarkdown
+html document. But better would be, an _interactive_ plot which let the investigator choose 
+which variable to look at in a given moment. 
  
-#### Synthesized survey data  
-Let's start by creating some survey data. One of the best things about `R` is the ability to 
+### Synthesized Busytown survey data  
+Let's start by creating some survey data. One of the best things about `R` is the ability to
 synthesize data according to a predicted form but with some randomness for realism. 
 
 ```
@@ -92,8 +90,8 @@ survey_sim <- data.table(trip_purpose = factor(sample(purpose_grid$purpose, 1000
                                                 
 ```
 
-Let's start with a static version of the plot we wish to see in the world. We use the ggplot2
-package for its ease of creating pretty good figures right away:
+Let's start with a static version of the plot we wish to see in the world. We use the `ggplot2` package for its ease of creating pretty good figures right away:
+
 ```
 p <- ggplot(survey_sim, aes(x = trip_purpose))
 p + geom_bar()
@@ -106,8 +104,8 @@ column we are interested in, but otherwise build the rest of the plot
 exactly the same way.
 
 One thing we will need is a list of columns to choose from. 
-In our dataset there are only two that are responses, but thinking
-ahead to a much larger dataset, we want to make this generic. 
+In our example dataset there are only two that are responses, but thinking
+ahead to the full Busytown dataset, we want to make this generic. 
 One simple thing is to just take the columns that are defined
 as factors, and put those column names in a vector:
 
@@ -115,10 +113,11 @@ as factors, and put those column names in a vector:
 xvars <- names(survey_sim)[sapply(survey_sim, is.factor)]
 ```
 
-This is an example of something that might go into a `global.R` or helper script.  
+This is an example of something that might go into a helper script that can be called
+by the `server.R`. These helper files conventionally are named `global.R`.
 
-#### server
-We know that the server will have to construct the plot. It
+### server
+We know that the server will construct and render the plot. It
 is a function, which takes in `input` values and returns `output`. 
 
 In our case, `input` = which variable we want;
@@ -134,32 +133,25 @@ server = function(input, output) {
 ```
 Things to note:
 
-* server is a function with input and output arguments
-* the plot to be displayed is assigned as a named object in the
-	output 
-* the ggplot code refers to an input object in the `aes_string` argument.
-* ... `aes_string`?! this is a super-useful version of the `aes`
-function which takes a character value and uses it to find the 
-corresponding column in the specified dataset. That means we can 
-pass column names back and forth between ui and server, rather
-than subsetting data and passing that back and forth.
+* the plot to be displayed is rendered and assigned to the
+	output object with the name `main_plot`
+* the ggplot code refers to an input object in the `aes_string` argument. 
+this version of the `aes` function takes a character value 
+and uses it to find the corresponding column in the specified dataset. 
+That means we can pass column names back and forth between ui and server as
+strings, rather than subsetting data and passing that back and forth.
 
 `renderPlot()` is a *reactive* function, which means it will 
 adjust and re-create itself based on the value of the input.
 
 
-#### ui
+### ui
 The user interface is where the selection of the inputs is 
-made, and where the output is displayed. Things are passed
-back and forth from the ui to the server and vice-versa
-using the object names we saw referred to in the server.
+made, and where the output is displayed. In this case we want to display
+the rendered plot we assigned to `output$main_plot`. Since this plot relies on
+an input value `input$varchoice`, we have to define that too.
 
-- `output$main_plot`: the plot we wish to render
-- `input$varchoice`: the variable we wish to see plotted
-
-In the ui these are referred to as quote-named ID values. We
-have to define one input, and one output, as well as how the
-overall page will look.
+We start with how the overall page will look.
 
 ```
 ui = shinyUI(
@@ -169,7 +161,7 @@ ui = shinyUI(
 ```
 
 Here we see things that look a little non-R-like. There
-are functions in R which are mimicking coding in html: `strong()`
+are functions in R which translate to html syntax: `strong()`
 is like "boldface", `p()` means a paragraph of text. 
 
 The `fluidPage` and `fluidRow` are shortcuts to creating nicely
@@ -192,11 +184,10 @@ ui = shinyUI(
                                       selected = xvars[1])),
    
 ```
-Here we have added our drop-down box. `selectizeInput` creates
+Here we have added our dropdown box. `selectizeInput` creates
 the selector. 
 
-* The *inputId* should look familiar as the thing
-we want to graph, in the server. 
+* The *inputId* is the name we use to access the variable in the server section. 
 * The *label* is just that, what 
 will appear on the screen above or next to the dropdown. 
 * The *choices* for the dropdown are what we defined earlier, and the
@@ -207,7 +198,7 @@ vector.
 
 So the input has been constructed, what about the output? In
 this case we just have to create a space on the page in which 
-we want the plot to be displayed - same row, a wider column - 
+we want the rendered plot to be displayed - same row, a wider column - 
 and then refer back to the `outputId` we gave it in our server
 definition:
 
@@ -229,7 +220,7 @@ ui = shinyUI(
     
   ) # end UI
 ```
-#### Shiny App function
+### Shiny App function
 To put it all together, we wrap both the server and ui definitions
 into a `shinyApp()` function:
 
@@ -259,7 +250,18 @@ shinyApp(
   ) # end UI
 ) # end App
 ```
-### Modify app to optionally plot by time of day
+
+### Run the App  
+Once the app is defined using the `shinyApp` function, it can be called by running:  
+```
+shiny::runApp()
+```
+
+When the script defining the shiny app is open in an RStudio project, you can also
+run the app by clicking the "Run App" button on the top of the source editor:
+![](runApp-button.png)
+
+## Modify app to optionally plot by time of day
 To add a checkbox for plotting by time of day, we can start
 by adding another input section, this time beginning with the 
 ui side (so we know where it will be shown on the page):
@@ -275,7 +277,7 @@ column(3,
                                   value = FALSE)),                               
 ...
 ```
-With `input$plotbytime` defined, we need to use it on the server
+With `input$plotbytime` defined, we need to define how to use it on the server
 side. Because it is a logical (checkboxes are either TRUE or FALSE)
 a straightforward `if() else ` will do:
 
@@ -326,6 +328,8 @@ ui = shinyUI(
   
 ) # end UI
 ) # end App
+
+shiny::runApp() # run the app in R
 ```
 
 ## Coding challenge  
